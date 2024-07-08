@@ -198,7 +198,7 @@ def rectification(distorted, flow):
     
     return resultImg, resultMsk
     
-distortedImg = io.imread(args.img_path)  
-flow = np.load(args.flow_path)
-resImg, resMsk = rectification(distortedImg, flow)
-io.imsave(resImg, 'result.png')
+# distortedImg = io.imread(args.img_path)  
+# flow = np.load(args.flow_path)
+# resImg, resMsk = rectification(distortedImg, flow)
+# io.imsave(resImg, 'result.png')
