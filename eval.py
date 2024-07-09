@@ -2,8 +2,9 @@ import torch
 from torch.autograd import Variable
 import torch.nn as nn
 import skimage
+from PIL import Image
 import skimage.io as io
-from skimage.transform import rescale, resize
+from skimage.transform import resize
 from torchvision import transforms
 import numpy as np
 import scipy.io as scio
@@ -40,11 +41,10 @@ model_class.eval()
 testImgPath = './imgs'
 saveFlowPath = '.'
 
-def scale_resize_image(image, resolution=(256, 256)):
+def scale_resize_image(image, resolution=(256, 256, 3)):
     image = resize(image, resolution, mode='constant')
-    # as toarch float32
-    image = image.astype(np.float32)
-    return image
+    im = (image * 255).astype(np.uint8)
+    return im
 
 correct = 0
 for index, types in enumerate(['house1','house2','living_room']):
@@ -52,11 +52,8 @@ for index, types in enumerate(['house1','house2','living_room']):
         disimgs = io.imread(imgPath)
         # save image scale
         resol = disimgs.shape
-        # log resolution
-        print('Resolution:')
-        print(resol)
-        disimgs = scale_resize_image(disimgs)
-        disimgs = transform(disimgs)
+        distorted = scale_resize_image(disimgs)
+        disimgs = transform(distorted)
         
         use_GPU = torch.cuda.is_available()
         if use_GPU:
@@ -79,9 +76,11 @@ for index, types in enumerate(['house1','house2','living_room']):
         # transpose 3 * H * W to H * W * 3
         disimgs = disimgs.data.cpu().numpy()
         disimgs = disimgs[0].transpose(1, 2, 0)
-        resImg, resMsk = rectification(disimgs, [u, v])
+        Image.fromarray((disimgs * 255).astype(np.uint8)).save("test2.jpg")
+        resImg, resMsk = rectification(distorted,[u,v])
         # resize back
-        resImg = rescale(resImg, (resol[0]/256, resol[1]/256), mode='constant')
+        resImg = scale_resize_image(resImg, resol)
+        print("resMsk", resMsk)
         io.imsave('%s%s%s%s' % (saveFlowPath, '/', types, '_res.jpg'), resImg)
         #saveMatPath =  '%s%s%s' % (saveFlowPath, '/', '.mat')
         #scio.savemat(saveMatPath, {'u': u,'v': v}) 
